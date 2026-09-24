@@ -1,0 +1,28 @@
+# Local Python environments and caches.
+venv/
+venv_new/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# ROS2 build products and local run logs.
+build/
+install/
+log/
+logs/*
+!logs/.gitkeep
+*.log
+*.pids
+
+# Editor and operating-system files.
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Local credentials.
+.env
+.env.*
+!.env.example

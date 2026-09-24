@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>综合定位系统展示</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script src="https://webapi.amap.com/maps?v=2.0&key={{ amap_api_key | urlencode }}"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <h1>GNSS + IMU + LiDAR + Vision 综合定位系统</h1>
+        <p>左侧全局地图，右侧室内相对轨迹与朝向</p>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div class="toggle-container">
+          <span id="modeLabel">室内 SLAM</span>
+          <label class="switch">
+            <input type="checkbox" id="modeToggle" onchange="toggleMode()">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <div class="pill" id="systemMode">模式: --</div>
+      </div>
+    </header>
+
+    <main class="main-grid">
+      <section class="panel map-panel">
+        <div class="panel-title-row">
+          <h2>全局地图 (AMap)</h2>
+          <span class="minor-text" id="globalCoord">室内模式：GNSS 不用于地图显示</span>
+        </div>
+        <div id="mapContainer"></div>
+      </section>
+
+      <section class="panel slam-panel">
+        <div class="panel-title-row">
+          <h2>室内相对轨迹</h2>
+          <span class="minor-text" id="localPose">pose: x -- / y -- / yaw --</span>
+        </div>
+        <canvas id="poseCanvas" width="720" height="500"></canvas>
+      </section>
+    </main>
+
+    <section class="panel status-panel">
+      <div class="panel-title-row">
+        <h2>系统状态</h2>
+        <span class="minor-text">实时刷新 (WebSocket 10Hz)</span>
+      </div>
+
+      <div class="status-grid">
+        <div class="status-card">
+          <h3>GNSS</h3>
+          <p id="gnssOnline">Status: --</p>
+          <p id="gnssSat">Satellites: Unknown</p>
+          <p id="gnssCoord">Coordinates: --</p>
+        </div>
+
+        <div class="status-card">
+          <h3>IMU</h3>
+          <p id="imuOnline">在线状态: --</p>
+          <p id="imuFreq">频率: --</p>
+        </div>
+
+        <div class="status-card">
+          <h3>LiDAR</h3>
+          <p id="lidarOnline">在线状态: --</p>
+          <p id="lidarFreq">频率: --</p>
+        </div>
+
+        <div class="status-card">
+          <h3>Vision</h3>
+          <p id="visionOnline">在线状态: 在线 (伴随系统启动)</p>
+          <p id="visionFeatures">当前特征点: --</p>
+          <p id="visionMatches">匹配内点: --</p>
+          <p id="visionLastLoop">上次回环: --</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let amap;
+    let amapMarker;
+    let socket;
+    let currentMode = 'SLAM';
+    let lastMapCenterTime = 0;
+    let gnssOrigin = null;
+    let lastGnssSeq = null;
+    let latestMapUpdate = null;
+    let renderTimer = null;
+
+    function setText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.innerText = text;
+    }
+
+    function drawCanvasMessage(message) {
+      const canvas = document.getElementById("poseCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width;
+      const H = canvas.height;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#0b1220";
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "22px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(message, W / 2, H / 2);
+    }
+
+    function setCanvasDisabled(disabled) {
+      if (disabled) {
+        drawCanvasMessage("室外 GNSS 模式：室内轨迹画布已禁用");
+        setText("localPose", "GNSS mode: canvas disabled");
+      } else {
+        drawCanvasMessage("室内 SLAM 模式：等待轨迹数据");
+        setText("localPose", "pose: x -- / y -- / yaw --");
+      }
+    }
+
+    function initAMap() {
+      amap = new AMap.Map("mapContainer", {
+        zoom: 18,
+        center: [120.445000, 36.389000],
+        viewMode: "2D"
+      });
+
+      amapMarker = new AMap.Marker({
+        position: new AMap.LngLat(120.445000, 36.389000),
+        offset: new AMap.Pixel(-10, -10),
+        zIndex: 9999,
+        content: '<div style="width:20px;height:20px;background:#ef4444;border:3px solid #ffffff;border-radius:50%;box-shadow:0 0 10px rgba(0,0,0,0.9);"></div>'
+      });
+      amap.add(amapMarker);
+    }
+
+    function toggleMode() {
+      const isChecked = document.getElementById('modeToggle').checked;
+      const targetMode = isChecked ? 'GNSS' : 'SLAM';
+      currentMode = targetMode;
+      if (currentMode === 'GNSS') {
+        gnssOrigin = null;
+        lastGnssSeq = null;
+      }
+
+      setCanvasDisabled(currentMode === 'GNSS');
+
+      setText('modeLabel', isChecked ? '室外 GNSS' : '室内 SLAM');
+      document.getElementById('modeLabel').style.color = isChecked ? '#22c55e' : '#e2e8f0';
+
+      if (currentMode === 'SLAM') {
+        setText("globalCoord", "室内模式：GNSS 不用于地图显示");
+      } else {
+        setText("globalCoord", "室外模式：等待 GNSS 定位");
+      }
+
+      if (socket) {
+        socket.emit('switch_mode', { mode: targetMode });
+      }
+    }
+
+    function getOutdoorModeFromSwitch() {
+      const toggle = document.getElementById('modeToggle');
+      return toggle && toggle.checked === true;
+    }
+
+    function syncModeUI(mode) {
+      currentMode = mode === 'GNSS' ? 'GNSS' : 'SLAM';
+      const isOutdoor = currentMode === 'GNSS';
+      const toggle = document.getElementById('modeToggle');
+      const label = document.getElementById('modeLabel');
+
+      if (toggle) toggle.checked = isOutdoor;
+      setText('modeLabel', isOutdoor ? '室外 GNSS' : '室内 SLAM');
+      if (label) label.style.color = isOutdoor ? '#22c55e' : '#e2e8f0';
+    }
+
+    function calcGnssDeltaMeters(rawLon, rawLat) {
+      if (!gnssOrigin) {
+        gnssOrigin = { lon: rawLon, lat: rawLat };
+      }
+
+      const R = 6378137.0;
+      const dLat = (rawLat - gnssOrigin.lat) * Math.PI / 180.0;
+      const dLon = (rawLon - gnssOrigin.lon) * Math.PI / 180.0;
+      const lat0 = gnssOrigin.lat * Math.PI / 180.0;
+      const dy = dLat * R;
+      const dx = dLon * R * Math.cos(lat0);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      return { dx, dy, dist };
+    }
+
+    function updateGnssDisplay(gnss) {
+      // Use the page switch to select the display mode.
+      const isOutdoorMode = getOutdoorModeFromSwitch();
+      currentMode = isOutdoorMode ? 'GNSS' : 'SLAM';
+
+      if (!gnss || !gnss.fixed) {
+        setText("globalCoord", isOutdoorMode ? "GNSS: Not Fixed" : "室内模式：GNSS 不用于地图显示");
+        setText("gnssOnline", "Status: Not Fixed");
+        setText("gnssCoord", "Coordinates: --");
+        return;
+      }
+
+      const lon = Number(gnss.lon);       // AMap / GCJ-02
+      const lat = Number(gnss.lat);
+      const rawLon = Number(gnss.raw_lon ?? lon);  // ROS /fix WGS84
+      const rawLat = Number(gnss.raw_lat ?? lat);
+      const seq = gnss.seq ?? "--";
+      const age = gnss.age ?? "--";
+      const status = gnss.status ?? "--";
+
+      if (!Number.isFinite(lon) || !Number.isFinite(lat) || !Number.isFinite(rawLon) || !Number.isFinite(rawLat)) {
+        return;
+      }
+
+      const delta = calcGnssDeltaMeters(rawLon, rawLat);
+      const seqChanged = lastGnssSeq !== seq;
+      lastGnssSeq = seq;
+
+      setText("gnssOnline", `Status: Online | seq ${seq} | age ${age}s`);
+      setText(
+        "gnssCoord",
+        `Raw(WGS84): ${rawLon.toFixed(9)}, ${rawLat.toFixed(9)} | ` +
+        `Map: ${lon.toFixed(9)}, ${lat.toFixed(9)} | ` +
+        `ΔE ${delta.dx.toFixed(2)}m, ΔN ${delta.dy.toFixed(2)}m, Dist ${delta.dist.toFixed(2)}m | ` +
+        `status ${status}`
+      );
+
+      if (!isOutdoorMode) {
+        setText("globalCoord", "室内模式：GNSS 不用于地图显示");
+        return;
+      }
+
+      // Update the marker for each rendered outdoor fix.
+      const pos = new AMap.LngLat(lon, lat);
+      amapMarker.setPosition(pos);
+
+      // Recenter on a new sequence or after one second without recentering.
+      const now = Date.now();
+      if (seqChanged || now - lastMapCenterTime > 1000) {
+        amap.setCenter(pos, false);
+        lastMapCenterTime = now;
+      }
+
+      setText(
+        "globalCoord",
+        `Map: ${lon.toFixed(9)}, ${lat.toFixed(9)} | ` +
+        `Raw: ${rawLon.toFixed(9)}, ${rawLat.toFixed(9)} | ` +
+        `Dist ${delta.dist.toFixed(2)}m | seq ${seq} | age ${age}s`
+      );
+    }
+
+    function drawPose(path, pose) {
+      if (currentMode !== 'SLAM') return;
+      if (!pose) return;
+
+      const canvas = document.getElementById("poseCanvas");
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width;
+      const H = canvas.height;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#0b1220";
+      ctx.fillRect(0, 0, W, H);
+      ctx.strokeStyle = "#334155";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(30, 30, W - 60, H - 60);
+
+      if (!path || path.length === 0) return;
+
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const p of path) {
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+      }
+
+      const pad = 0.5;
+      minX -= pad; maxX += pad; minY -= pad; maxY += pad;
+      const rangeX = Math.max(maxX - minX, 1.0);
+      const rangeY = Math.max(maxY - minY, 1.0);
+      const scale = Math.min((W - 80) / rangeX, (H - 80) / rangeY);
+
+      function worldToCanvas(x, y) {
+        return {
+          x: 40 + (x - minX) * scale,
+          y: H - 40 - (y - minY) * scale
+        };
+      }
+
+      ctx.beginPath();
+      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 3;
+      for (let i = 0; i < path.length; i++) {
+        const p = worldToCanvas(path[i].x, path[i].y);
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      const p = worldToCanvas(pose.x, pose.y);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+      ctx.fillStyle = "#22c55e";
+      ctx.fill();
+
+      const rad = (pose.yaw - 90) * Math.PI / 180.0;
+      const len = 40;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(p.x + len * Math.cos(rad), p.y - len * Math.sin(rad));
+      ctx.strokeStyle = "#22c55e";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    window.onload = function () {
+      initAMap();
+      setCanvasDisabled(false);
+      socket = io();
+
+      socket.on('connect', function() {
+        socket.emit('switch_mode', { mode: currentMode });
+      });
+
+      function renderLatestMapUpdate() {
+        if (!latestMapUpdate) return;
+
+        const data = latestMapUpdate;
+        latestMapUpdate = null;
+
+        // Select canvas or map rendering from the current page switch.
+        const isOutdoorMode = getOutdoorModeFromSwitch();
+        currentMode = isOutdoorMode ? 'GNSS' : 'SLAM';
+
+        updateGnssDisplay(data.gnss);
+
+        if (!isOutdoorMode) {
+          if (data.pose) {
+            drawPose(data.path, data.pose);
+            setText("localPose", `pose: x ${data.pose.x.toFixed(2)} / y ${data.pose.y.toFixed(2)} / yaw ${data.pose.yaw.toFixed(1)}°`);
+          }
+        } else {
+          setCanvasDisabled(true);
+        }
+
+        if (data.status) {
+          setText("systemMode", `模式: ${data.status.mode || '--'}`);
+          setText("lidarOnline", `在线状态: ${data.status.lidar?.online || '--'}`);
+          setText("lidarFreq", `频率: ${data.status.lidar?.frequency || '--'} Hz`);
+          setText("imuOnline", `在线状态: ${data.status.imu?.online || '--'}`);
+          setText("imuFreq", `频率: ${data.status.imu?.frequency || '--'} Hz`);
+          setText("visionFeatures", `当前特征点: ${data.status.vision?.features || '--'}`);
+          setText("visionMatches", `匹配内点: ${data.status.vision?.matches || '--'}`);
+          setText("visionLastLoop", `上次回环: ${data.status.vision?.last_loop_time || '--'}`);
+        }
+      }
+
+      socket.on('map_update', function(data) {
+        if (!data) return;
+        // Keep only the latest update for the next 100 ms render tick.
+        latestMapUpdate = data;
+      });
+
+      renderTimer = setInterval(renderLatestMapUpdate, 100);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+[
+  {
+    "file": "robot-top.jpg",
+    "source": "Owner-supplied photograph",
+    "sha256": "2c89df725eef1a41aad2120201e89be23c4e37a40edafa7bcf8eb078a5ee5ddd"
+  },
+  {
+    "file": "robot-side-lidar.jpg",
+    "source": "Owner-supplied photograph",
+    "sha256": "c0ba48a58742ad4f4a399d68f00a7fcde6183d074d925207603084b05dbb62de"
+  },
+  {
+    "file": "robot-side-camera.jpg",
+    "source": "Owner-supplied photograph",
+    "sha256": "d526b95233d11774c8549d01c4fa9a684ac05abb71bbff0ffba5c3a39eae342a"
+  },
+  {
+    "file": "hardware-annotated.png",
+    "source": "RTLS.docx / word/media/image1.png",
+    "sha256": "ec3791d7a172ea0d55e20689533818ce9c4c095a5d07a3e0742e9ed2d0262faf"
+  },
+  {
+    "file": "startup.png",
+    "source": "RTLS.docx / word/media/image2.png",
+    "sha256": "9e3a3351981b11a7bcd41dfd864afa6b872fca24bb3f2b2a9ab0384aebc7d13e"
+  },
+  {
+    "file": "topics.png",
+    "source": "RTLS.docx / word/media/image3.png",
+    "sha256": "be0255e5f4fb4d04c2448dd218e3785ee81e33c0cc0a2a1f7d0844d4cf993871"
+  },
+  {
+    "file": "lidar-rate.png",
+    "source": "RTLS.docx / word/media/image4.png",
+    "sha256": "4322e07a0cf9efba246d97c55dcdd14426baede1e528d9741f9bdae58eaedcfc"
+  },
+  {
+    "file": "imu-rate.png",
+    "source": "RTLS.docx / word/media/image5.png",
+    "sha256": "8e08ccb7bed16a5d43341f95982b57df2f8ac7967ad70fbbb4c24def2d053c9b"
+  },
+  {
+    "file": "gnss-rate.png",
+    "source": "RTLS.docx / word/media/image6.png",
+    "sha256": "ec22b93eb14b26be6c3fd76b5bd222cb195b3f18a66c91085b22d9b96a26628a"
+  },
+  {
+    "file": "rf2o-rate.png",
+    "source": "RTLS.docx / word/media/image7.png",
+    "sha256": "b01cea797fd0c268b1e4d6d6de7823c7f79482ee08f49576457c65a363ce38d4"
+  },
+  {
+    "file": "ekf-output.png",
+    "source": "RTLS.docx / word/media/image8.png",
+    "sha256": "cf22b0af2d7f8b6a5243ae86a9e58856481d4719362a8ec0120a6561f6533c25"
+  },
+  {
+    "file": "rtabmap-path.png",
+    "source": "RTLS.docx / word/media/image9.png",
+    "sha256": "5fd4a7c2f786307eef1b13a819397d95447963ddd810734159e30e0864e2742f"
+  },
+  {
+    "file": "indoor-idle.png",
+    "source": "RTLS.docx / word/media/image10.png",
+    "sha256": "0ef23647e567f7442c726b2014bd1b315868bb61023e7d8478c2f9a526e8d4d4"
+  },
+  {
+    "file": "indoor-trajectory.jpeg",
+    "source": "RTLS.docx / word/media/image11.jpeg",
+    "sha256": "1b0de1df26929335a8e7012f82689473fdf931d18766c2d84018d3fbabfafc07"
+  },
+  {
+    "file": "outdoor-gnss.jpeg",
+    "source": "RTLS.docx / word/media/image12.jpeg",
+    "sha256": "72dba07865393fd09c7c40df7103430d2f502cd4b966c27c4ce5da90696c8354"
+  },
+  {
+    "file": "outdoor-gnss-second.jpeg",
+    "source": "RTLS.docx / word/media/image13.jpeg",
+    "sha256": "2941528e13205c591001502c53c3d56886f46253a09ef6417910469ee35924b8"
+  }
+]
