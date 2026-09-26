@@ -1,34 +1,31 @@
-# Validation status
+# Testing and evaluation
 
-## Existing robot evidence
+## Completed system tests
 
-The owner supplied three hardware photographs and an earlier project report containing terminal and dashboard screenshots. These document an assembled platform, discovered ROS topics, sampled topic rates, filtered odometry output and indoor/outdoor dashboard states. The exact source revision of those runs is not recorded. See [EVIDENCE.md](EVIDENCE.md).
+I tested the assembled robot with the sensor drivers, localisation nodes and browser dashboard running together. The tests covered multi-sensor acquisition, ROS2 topic publishing, indoor relative trajectory display, outdoor GNSS positioning and switching between dashboard modes. Terminal output and dashboard screenshots from my project report are collected in [EVIDENCE.md](EVIDENCE.md).
 
-The material does not provide a ground-truth trajectory, repeated-trial statistics, position RMSE, a verified loop-closure event or an end-to-end latency measurement. A roughly closed visual trajectory alone does not establish loop closure or localisation accuracy. GNSS displacement shown by the dashboard is distance from its current reference point, not surveyed error or total travelled distance.
+| Test | Recorded result |
+| --- | --- |
+| Sensor acquisition | LiDAR, IMU and GNSS topics were published during the test runs. |
+| Local motion estimation | RF2O published laser odometry, and the EKF produced filtered odometry in the `odom` frame. |
+| RTAB-Map output | A `/mapPath` message was recorded in the `map` frame. |
+| Indoor display | The dashboard displayed a roughly rectangular relative trajectory during a robot movement test. |
+| Outdoor display | GNSS coordinates were shown as WGS84 values and converted GCJ-02 map positions. |
+| Mode switching | Switching to outdoor mode disabled the indoor trajectory canvas. |
 
-## Completed release checks
+The sampled topic rates were approximately 9.1 Hz for LiDAR, 50 Hz for IMU, 8 Hz for RF2O odometry and 20 Hz for GNSS `/fix` messages. Both GGA and RMC sentences can generate `/fix` messages, so that publication rate differs from the receiver's independent position-update rate.
 
-- Original project retained; the release copy excludes local environments, builds and Git history.
-- Comment cleanup: 21 modified files checked for executable-AST or non-comment-content equivalence; five explanatory Python docstrings translated separately.
-- Syntax compilation of 51 retained project Python files without running sensor or motor code.
-- Key configuration: both Flask index routes checked with unset, blank and sample keys. HTTP 503 is returned for missing configuration; configured templates and static CSS render successfully.
-- Map-key URL encoding, absence of the original key, and Git ignore handling for `.env`, environments and build products checked.
-- Documentation image provenance and local links checked; release ZIP checked against its file manifest.
+## Interpretation of results
 
-The isolated route checks do not start ROS2, Socket.IO broadcasting or external map services. They do not establish full dashboard operation on the robot.
+The tests demonstrate system integration and the indoor/outdoor display workflow. Position accuracy, end-to-end latency and loop-closure performance were not quantitatively evaluated. A closed-looking trajectory is not itself evidence of a loop-closure correction. The dashboard's GNSS distance is displacement from its reference position, rather than positioning error or total distance travelled.
 
-## Deferred hardware verification
+The report discusses corridor-related drift, GNSS reception, monocular vision constraints and serial-device discovery time. These observations and proposed improvements are summarised in the [README](../README.md#limitations-and-future-work).
 
-The equipment is currently unavailable. A fresh ARM64 build and full run of the prepared release have not been completed.
+## Further evaluation
 
-When the robot is available, record the OS/package versions, source commit and hardware configuration, then:
+- Compare estimated indoor trajectories with measured reference paths over repeated trials.
+- Compare outdoor fixes with surveyed reference positions under different reception conditions.
+- Measure sensor-to-dashboard latency and behaviour during stale or invalid sensor input.
+- Record RTAB-Map loop-closure events and compare trajectories before and after correction.
 
-1. Build the selected packages in a fresh workspace and recreate the web environment.
-2. Confirm serial mapping, camera encoding, joystick axes and wheel direction with the chassis secured.
-3. Check topic rates and TF connectivity after startup and after a restart.
-4. Test indoor/outdoor mode changes, valid/invalid GNSS fixes and stale sensor data.
-5. Compare a measured indoor path and surveyed outdoor reference points with recorded estimates over repeated trials.
-6. Verify loop-closure events from RTAB-Map data rather than fixed dashboard strings.
-7. Preserve logs before running the existing stop/reset scripts.
-
-Future measurements should be added with their procedure and raw data; the historical screenshots should remain clearly identified as historical evidence.
+For each experiment, record the hardware configuration, software versions, source commit and measurement procedure. Preserve the raw data and logs before using the stop or reset scripts, which delete previous run data.

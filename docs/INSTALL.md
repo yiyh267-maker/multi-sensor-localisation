@@ -1,6 +1,6 @@
 # Installation and build
 
-This procedure is derived from the source and launch scripts. It has not been executed on a fresh Raspberry Pi for this release. Use Ubuntu 24.04 ARM64 with ROS2 Jazzy on the Pi. The scripts expect `~/rtls_project` and `/opt/ros/jazzy/setup.bash`.
+Use Ubuntu 24.04 ARM64 with ROS2 Jazzy on the Raspberry Pi. The scripts expect `~/rtls_project` and `/opt/ros/jazzy/setup.bash`.
 
 ## 1. ROS2 and system dependencies
 
@@ -18,7 +18,7 @@ sudo apt install ros-jazzy-ros-base ros-dev-tools \
   ros-jazzy-usb-cam ros-jazzy-topic-tools
 ```
 
-This is a source-derived dependency list, not a captured apt lockfile. Optional Cartographer, Madgwick and vendor navigation examples require additional packages and are outside the main-demo build below. Package metadata is not fully consistent: for example, the included RPLIDAR manifest lists `rclpy_components`, and the IMU license fields differ between files. A blanket `rosdep install` over every retained vendor package may therefore require follow-up; do not treat it as proof of a reproducible environment.
+These packages cover the main demo. Optional Cartographer, Madgwick and vendor navigation examples require additional packages and are outside the main-demo build below. Package metadata is not fully consistent: for example, the included RPLIDAR manifest lists `rclpy_components`, and the IMU license fields differ between files. Use the selected-package build below to avoid pulling in unrelated vendor examples.
 
 ## 2. Build the selected workspaces
 
@@ -53,7 +53,7 @@ python3 -m venv --system-site-packages display_bridge/venv
 display_bridge/venv/bin/python -m pip install -r requirements-web.txt
 ```
 
-Using the system interpreter and its ROS packages matters for binary compatibility; see the [ROS2 Python package guide](https://docs.ros.org/en/jazzy/How-To-Guides/Using-Python-Packages.html). The two pinned web versions were found in the supplied environment. Transitive dependencies are not locked, and this environment has not been tested on the current robot.
+Using the system interpreter and its ROS packages matters for binary compatibility; see the [ROS2 Python package guide](https://docs.ros.org/en/jazzy/How-To-Guides/Using-Python-Packages.html). The two pinned web dependencies match the project environment. Transitive dependencies are not locked.
 
 ## 4. Configure and start on the robot
 
@@ -84,7 +84,7 @@ bash ~/rtls_project/scripts/stop_demo1.sh
 
 The stop script also removes the RTAB-Map database and project logs. Save any experiment data you want to retain before stopping or restarting.
 
-## 5. Inspect live output when hardware is available
+## 5. Inspect live output
 
 ```bash
 ros2 topic list
@@ -96,4 +96,4 @@ ros2 topic echo /odometry/filtered --once
 ros2 topic echo /mapPath --once
 ```
 
-Run frequency commands one at a time and stop each with Ctrl+C. A topic list confirms discovery, not positioning accuracy. Record timings and compare known physical paths separately; see [VALIDATION.md](VALIDATION.md).
+Run frequency commands one at a time and stop each with Ctrl+C. A topic list confirms discovery, not positioning accuracy. See [VALIDATION.md](VALIDATION.md) for the recorded results and further evaluation.

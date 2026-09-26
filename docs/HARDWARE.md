@@ -1,6 +1,6 @@
 # Hardware assembly
 
-The photographs show the physical prototype used for the project. The side views show the four-wheel chassis, stacked electronics, batteries, cabling and elevated LiDAR. The opposite side also shows the camera. Component names below follow the owner's report; no additional sensor model is inferred from appearance.
+I assembled the robot on a four-wheel chassis, with stacked computing boards, separate batteries and a raised LiDAR mount. The photographs below show the sensors, electronics and wiring used in the project.
 
 ## Camera side
 
@@ -18,6 +18,6 @@ The photographs show the physical prototype used for the project. The side views
 
 ![Original hardware annotations from the project report](images/hardware-annotated.png)
 
-The original Chinese labels identify the A1 LiDAR, IMU on the reverse side, monocular camera, batteries, antenna board, 4G module, expansion board, Raspberry Pi 5, regulated power board, GNSS module, four-channel motor driver, motors and external antenna. The report states that separate batteries power the computing platform and motors.
+The original Chinese labels identify the A1 LiDAR, IMU on the reverse side, monocular camera, batteries, antenna board, 4G module, expansion board, Raspberry Pi 5, regulated power board, GNSS module, four-channel motor driver, motors and external antenna. Separate batteries power the computing platform and motors.
 
-The three new photographs and the annotated report image are preserved without pixel edits. They establish the physical assembly, not sensor calibration or positioning performance. See [image_sources.json](image_sources.json) for source labels and SHA-256 hashes.
+The annotated image comes from my project report. See [image_sources.json](image_sources.json) for the image sources and SHA-256 hashes.
