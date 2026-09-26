@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="700" viewBox="0 0 1120 700" role="img" aria-labelledby="title desc">
+<title id="title">Multi-sensor localisation architecture</title>
+<desc id="desc">LiDAR odometry and IMU measurements feed an EKF. Filtered odometry, scans and camera images feed RTAB-Map. The dashboard bridge receives local transforms, map paths and GNSS fixes and sends them to the browser.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/></marker></defs>
+<rect width="1120" height="700" fill="white"/>
+<g font-family="Arial, sans-serif" fill="#172b4d">
+<text x="30" y="28" font-size="20" font-weight="bold">Sensor inputs and localisation pipeline</text>
+<path d="M190 108 H250" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M190 248 H250" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M190 388 H250" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M190 588 H250" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M220 108 V50 H535 V76 H560" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M490 108 H520 V178 H560" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M490 248 H530 V218 H560" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M780 76 H960 V280" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M780 198 H815 V310 H850" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M490 388 H850" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M670 250 V550" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M960 420 V480 H710 V550" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M490 588 H560" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<path d="M780 588 H850" fill="none" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="30" y="70" width="160" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="110.0" y="97" text-anchor="middle" font-size="17" font-weight="bold">2D LiDAR</text>
+<text x="110.0" y="121" text-anchor="middle" font-size="14">/scan</text>
+<rect x="30" y="210" width="160" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="110.0" y="237" text-anchor="middle" font-size="17" font-weight="bold">IMU</text>
+<text x="110.0" y="261" text-anchor="middle" font-size="14">/imu/data_raw</text>
+<rect x="30" y="350" width="160" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="110.0" y="377" text-anchor="middle" font-size="17" font-weight="bold">USB camera</text>
+<text x="110.0" y="401" text-anchor="middle" font-size="14">/image_raw</text>
+<rect x="30" y="550" width="160" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="110.0" y="577" text-anchor="middle" font-size="17" font-weight="bold">GNSS</text>
+<text x="110.0" y="601" text-anchor="middle" font-size="14">NMEA sentences</text>
+<rect x="250" y="70" width="240" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="370.0" y="97" text-anchor="middle" font-size="17" font-weight="bold">RF2O</text>
+<text x="370.0" y="121" text-anchor="middle" font-size="14">/odom_rf2o</text>
+<rect x="250" y="210" width="240" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="370.0" y="237" text-anchor="middle" font-size="17" font-weight="bold">Reliable QoS relay</text>
+<text x="370.0" y="261" text-anchor="middle" font-size="14">/imu/data_reliable</text>
+<rect x="250" y="350" width="240" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="370.0" y="377" text-anchor="middle" font-size="17" font-weight="bold">YUYV to BGR</text>
+<text x="370.0" y="401" text-anchor="middle" font-size="14">/image_raw_bgr</text>
+<rect x="250" y="550" width="240" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="370.0" y="577" text-anchor="middle" font-size="17" font-weight="bold">NMEA publisher</text>
+<text x="370.0" y="601" text-anchor="middle" font-size="14">/fix, /gnss/enu</text>
+<rect x="560" y="40" width="220" height="76" rx="9" fill="#eff6ff" stroke="#b8c9dd"/>
+<text x="670.0" y="67" text-anchor="middle" font-size="17" font-weight="bold">Reliable QoS relay</text>
+<text x="670.0" y="91" text-anchor="middle" font-size="14">/scan_reliable</text>
+<rect x="560" y="140" width="220" height="110" rx="9" fill="#ecfdf5" stroke="#b8c9dd"/>
+<text x="670.0" y="167" text-anchor="middle" font-size="17" font-weight="bold">robot_localization</text>
+<text x="670.0" y="191" text-anchor="middle" font-size="14">EKF</text>
+<text x="670.0" y="212" text-anchor="middle" font-size="14">/odometry/filtered</text>
+<rect x="850" y="280" width="240" height="140" rx="9" fill="#ecfdf5" stroke="#b8c9dd"/>
+<text x="970.0" y="307" text-anchor="middle" font-size="17" font-weight="bold">RTAB-Map</text>
+<text x="970.0" y="331" text-anchor="middle" font-size="14">Filtered odometry</text>
+<text x="970.0" y="352" text-anchor="middle" font-size="14">Scan + image inputs</text>
+<text x="970.0" y="373" text-anchor="middle" font-size="14">Camera calibration</text>
+<rect x="560" y="550" width="220" height="76" rx="9" fill="#fff7ed" stroke="#b8c9dd"/>
+<text x="670.0" y="577" text-anchor="middle" font-size="17" font-weight="bold">Dashboard bridge</text>
+<text x="670.0" y="601" text-anchor="middle" font-size="14">ROS2 to web</text>
+<rect x="850" y="550" width="240" height="76" rx="9" fill="#fff7ed" stroke="#b8c9dd"/>
+<text x="970.0" y="577" text-anchor="middle" font-size="17" font-weight="bold">Browser dashboard</text>
+<text x="970.0" y="601" text-anchor="middle" font-size="14">Indoor / outdoor modes</text>
+<text x="682" y="450" font-size="14">odom TF</text>
+<text x="787" y="471" font-size="14">map TF + /mapPath</text>
+<text x="788" y="578" font-size="13">Socket.IO</text>
+<text x="30" y="669" font-size="15" fill="#475569">Simplified data flow. Indoor and outdoor modes select the dashboard's position source.</text>
+</g></svg>

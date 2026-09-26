@@ -2,7 +2,9 @@
 
 A multi-sensor localisation system built on a Raspberry Pi 5 and a four-wheel mobile platform for a communication systems design course. It combines 2D LiDAR, an IMU, GNSS and a USB camera through ROS2, with a browser dashboard for indoor relative trajectories and outdoor map positioning.
 
-![Assembled robot with LiDAR, camera and computing stack](docs/images/robot-side-camera.jpg)
+![Robot assembly with component labels from the project report](docs/images/hardware-annotated.png)
+
+*Annotated hardware assembly from my project report. The original Chinese labels identify the sensors, computing boards, power supply and drive components; the component table below gives their English names.*
 
 I completed this project individually, from hardware assembly and sensor integration to configuration, debugging, testing and the web demonstration. Parts of the code were supplied by hardware manufacturers, and parts were developed with AI assistance. I integrated these components and tested the complete system on the robot. The localisation pipeline uses RF2O, `robot_localization` and RTAB-Map.
 
@@ -31,26 +33,7 @@ See the [test screenshots](docs/EVIDENCE.md) and [hardware gallery](docs/HARDWAR
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    L[2D LiDAR] --> S["/scan"]
-    S --> R[RF2O]
-    R --> O["/odom_rf2o"]
-    I[IMU] --> IR["/imu/data_raw"]
-    IR --> Q[Reliable QoS relay]
-    Q --> E[robot_localization EKF]
-    O --> E
-    C[USB camera] --> Y[YUYV to BGR]
-    Y --> T[RTAB-Map]
-    S --> SQ[Reliable QoS relay]
-    SQ --> T
-    E --> T
-    G[GNSS] --> N[NMEA publisher]
-    N --> B[Dashboard bridge]
-    E -->|odom TF| B
-    T -->|map TF and mapPath| B
-    B -->|Socket.IO| W[Browser dashboard]
-```
+![Data flow from LiDAR, IMU, camera and GNSS through the localisation nodes to the browser dashboard](docs/images/architecture.svg)
 
 Indoor positioning uses local motion estimates, while outdoor positioning uses GNSS coordinates. The dashboard selects the appropriate source for each mode and recenters the indoor display after a mode reset. The sensor nodes continue running across display-mode changes.
 
